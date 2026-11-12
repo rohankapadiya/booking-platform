@@ -1,13 +1,20 @@
-   import express from "express";
-   import cors from "cors";
+import { prisma } from "./db.js";
 
-   const app = express();
+import express from "express";
+import cors from "cors";
 
-   app.use(cors());
-   app.use(express.json());
+const app = express();
 
-   app.get("/health", (req, res) => {
-     res.json({ status: "ok" });
-   });
+app.use(cors());
+app.use(express.json());
 
-   export default app;
+app.get("/health", (req, res) => {
+    res.json({ status: "ok" });
+});
+
+app.get("/health/db", async (req, res) => {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ database: "ok" });
+});
+
+export default app;
