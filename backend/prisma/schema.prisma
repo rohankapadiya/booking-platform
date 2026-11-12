@@ -1,0 +1,67 @@
+   generator client {
+     provider = "prisma-client-js"
+   }
+
+   datasource db {
+     provider = "postgresql"
+   }
+
+   enum Role {
+     CUSTOMER
+     PROVIDER
+     ADMIN
+   }
+
+   enum BookingStatus {
+     CONFIRMED
+     CANCELLED
+   }
+
+   model User {
+     id           Int       @id @default(autoincrement())
+     email        String    @unique
+     passwordHash String    @map("password_hash")
+     name         String
+     role         Role      @default(CUSTOMER)
+     createdAt    DateTime  @default(now()) @map("created_at")
+     services     Service[]
+     bookings     Booking[]
+
+     @@map("users")
+   }
+
+   model Service {
+     id              Int     @id @default(autoincrement())
+     providerId      Int     @map("provider_id")
+     provider        User    @relation(fields: [providerId], references: [id])
+     name            String
+     description     String?
+     durationMinutes Int     @map("duration_minutes")
+     price           Decimal @db.Decimal(10, 2)
+     slots           Slot[]
+
+     @@map("services")
+   }
+
+   model Slot {
+     id        Int       @id @default(autoincrement())
+     serviceId Int       @map("service_id")
+     service   Service   @relation(fields: [serviceId], references: [id])
+     startsAt  DateTime  @map("starts_at")
+     endsAt    DateTime  @map("ends_at")
+     bookings  Booking[]
+
+     @@map("slots")
+   }
+
+   model Booking {
+     id         Int           @id @default(autoincrement())
+     slotId     Int           @map("slot_id")
+     slot       Slot          @relation(fields: [slotId], references: [id])
+     customerId Int           @map("customer_id")
+     customer   User          @relation(fields: [customerId], references: [id])
+     status     BookingStatus @default(CONFIRMED)
+     createdAt  DateTime      @default(now()) @map("created_at")
+
+     @@map("bookings")
+   }
