@@ -12,7 +12,7 @@ export default async function Navbar() {
 
         <div className="flex items-center gap-4 text-sm">
             {user ? (
-            <>
+            <>     <Link href="/bookings">My bookings</Link>
                 <span>Hi, {user.name}</span>
                 <form action={logoutAction}>
                 <button type="submit" className="underline">Log out</button>
