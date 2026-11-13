@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { getToken } from "@/lib/session";
+import { revalidatePath } from "next/cache";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -31,4 +32,18 @@ export async function bookSlotAction(prevState, formData) {
     }
 
     redirect("/bookings");
+}
+
+
+export async function cancelBookingAction(formData) {
+    const token = await getToken();
+    if (!token) redirect("/login");
+
+    const res = await fetch(
+    `${API_URL}/api/bookings/${Number(formData.get("bookingId"))}/cancel`,
+    { method: "PATCH", headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (res.status === 401) redirect("/login");
+
+    revalidatePath("/bookings");
 }
