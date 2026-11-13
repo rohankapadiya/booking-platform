@@ -40,4 +40,36 @@ router.post("/", requireAuth, requireRole("PROVIDER", "ADMIN"), async (req, res)
     res.status(201).json(service);
 });
 
+
+router.get("/:id/slots", async (req, res) => {
+    const slots = await prisma.slot.findMany({
+    where: {
+        serviceId: Number(req.params.id),
+        startsAt: { gt: new Date() },
+        bookings: { none: { status: "CONFIRMED" } },
+    },
+    orderBy: { startsAt: "asc" },
+    });
+    res.json(slots);
+});
+
+router.post("/:id/slots", requireAuth, requireRole("PROVIDER", "ADMIN"), async (req, res) => {
+    const serviceId = Number(req.params.id);
+    const service = await prisma.service.findUnique({ where: { id: serviceId } });
+    if (!service) {
+    return res.status(404).json({ error: "service not found" });
+    }
+    if (req.user.role !== "ADMIN" && service.providerId !== req.user.id) {
+    return res.status(403).json({ error: "you can only add slots to your own services" });
+    }
+
+    const startsAt = new Date(req.body?.startsAt);
+    if (Number.isNaN(startsAt.getTime()) || startsAt <= new Date()) {
+    return res.status(400).json({ error: "startsAt must be a valid future date-time" });
+    }
+
+    const endsAt = new Date(startsAt.getTime() + service.durationMinutes * 60 * 1000);
+    const slot = await prisma.slot.create({ data: { serviceId, startsAt, endsAt } });
+    res.status(201).json(slot);
+});
 export default router;
