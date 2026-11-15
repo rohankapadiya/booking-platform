@@ -1,21 +1,52 @@
-   services:
-     db:
-       image: postgres:16
-       container_name: booking_db
-       restart: unless-stopped
-       environment:
-         POSTGRES_USER: ${POSTGRES_USER}
-         POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-         POSTGRES_DB: ${POSTGRES_DB}
-       ports:
-         - "5432:5432"
-       volumes:
-         - pgdata:/var/lib/postgresql/data
-       healthcheck:
-         test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-         interval: 5s
-         timeout: 5s
-         retries: 5
+services:
+  db:
+    image: postgres:16
+    container_name: booking_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-   volumes:
-     pgdata:
+
+  backend:
+    build: ./backend
+    container_name: booking_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://backend:4000
+    container_name: booking_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+
+volumes:
+  pgdata:
+
+
+
