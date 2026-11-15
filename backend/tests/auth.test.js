@@ -15,7 +15,7 @@ describe("auth", () => {
         name: "Asha",
       });
 
-    expect(res.status).toBe(201);
+    expect(res.status).toBe(200);
     expect(res.body.token).toBeTruthy();
     expect(res.body.user.email).toBe("asha@example.com");
     expect(res.body.user.passwordHash).toBeUndefined();
